@@ -13,7 +13,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     (function(){
-      var BUILD_VERSION = "20260927_brave3d_v2";
+      var BUILD_VERSION = "20260927_brave3d_v1";
       window.UJ_BUILD_VERSION = BUILD_VERSION;
       window.ujAssetUrl = function(url){
         try{
@@ -4414,10 +4414,10 @@ body.quizPageOpen #messageBox{
   <div id="coverPage" aria-label="Game introduction">
     <div class="coverCard cleanCoverCard">
       <div class="coverImageWrap cleanCoverImage">
-        <img loading="eager" decoding="async" src="https://raw.githubusercontent.com/limkimsze-maker/P3-Multiply-Egyptian-Maze/31e544382d66f8669d6ba12901f9cd9ba7cd4a5c/Ahjoe.png?ujv=20260927_brave3d_v2" alt="Uncle Joe and the Key of Product cover picture">
+        <img loading="eager" decoding="async" src="https://raw.githubusercontent.com/limkimsze-maker/P3-Multiply-Egyptian-Maze/31e544382d66f8669d6ba12901f9cd9ba7cd4a5c/Ahjoe.png?ujv=20260927_brave3d_v1" alt="Uncle Joe and the Key of Product cover picture">
       </div>
 
-      <div style="margin:0 auto 10px;padding:7px 11px;border-radius:999px;width:max-content;max-width:100%;background:rgba(255,216,107,.14);border:1px solid rgba(255,216,107,.35);font-weight:900;color:#ffe59a">Brave 3D Desktop Edition · lighter graphics, same multiplication algorithm</div><p class="coverSubtitle cleanIntro">
+      <p class="coverSubtitle cleanIntro">
         Rescue the villagers, solve the multiplication challenges, and unlock the final door with the <b>Key of Product</b>.
       </p>
 
@@ -4455,7 +4455,7 @@ body.quizPageOpen #messageBox{
 <div id="runtimeErrorBox" style="display:none;position:fixed;left:8px;right:8px;bottom:90px;z-index:99999;background:#fff1f2;color:#7f1d1d;border:2px solid #ef4444;border-radius:14px;padding:10px;font:700 13px Arial,sans-serif;"></div>
 
   <div id="topHUD">
-    <div id="gameTitle">🏺 Uncle Joe and the Key of Product <span style="font-size:.64em;opacity:.82">(Brave 3D)</span></div>
+    <div id="gameTitle">🏺 Uncle Joe and the Key of Product</div>
     <div class="hudPill">Room: <span id="chamberText">Entrance</span></div>
     <div class="hudPill">Jewels: <span id="jewelText">0 / 5</span></div>
     <div class="hudPill">Stage: <span id="stageHudText">1 / 6</span></div>
@@ -4607,7 +4607,7 @@ body.quizPageOpen #messageBox{
 
   <div id="endingPanel">
     <div id="endingCard">
-      <img class="endingPhoto" loading="eager" decoding="async" src="https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/1933c449dda189ba5d19ab5d14c45dd8eb9a35ba/escape%20complete.png?ujv=20260927_brave3d_v2" alt="Happy Uncle Joe and villagers outside in the bright forest">
+      <img class="endingPhoto" loading="eager" decoding="async" src="https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/1933c449dda189ba5d19ab5d14c45dd8eb9a35ba/escape%20complete.png?ujv=20260927_brave3d_v1" alt="Happy Uncle Joe and villagers outside in the bright forest">
       <div class="rubyBig">♦️ 🔶 💚 🗝️</div>
       <h1>The Escape Is Complete!</h1>
       <p>You collected the <b>Ruby of Product</b>, <b>Topaz of Tens</b>, <b>Emerald of Hundreds</b>, the <b>Wondrous Magic Wand of Regrouping</b>, unlocked all <b>Number Locks</b>, and found the <b>Key of Product</b>.</p>
@@ -4637,18 +4637,63 @@ body.quizPageOpen #messageBox{
 </script>
 
   <script crossorigin="anonymous" src="./vendor/three.min.js"></script>
+  <script>
+  /* Brave 3D compatibility layer: graphics only. No game/quiz logic changes. */
+  (function(){
+    if(!window.THREE) return;
+    window.UJ_BRAVE_3D_COMPAT = true;
+
+    var NativeLambert = THREE.MeshLambertMaterial;
+    function BraveStandardMaterial(p){
+      p = p || {};
+      var mat = new NativeLambert({
+        color: p.color !== undefined ? p.color : 0xffffff,
+        emissive: p.emissive !== undefined ? p.emissive : 0x000000,
+        emissiveIntensity: Math.min(p.emissiveIntensity == null ? 1 : p.emissiveIntensity, 0.7),
+        map: p.map || null,
+        alphaMap: p.alphaMap || null,
+        transparent: !!p.transparent,
+        opacity: p.opacity == null ? 1 : p.opacity,
+        alphaTest: p.alphaTest || 0,
+        side: THREE.DoubleSide,
+        depthTest: p.depthTest !== false,
+        depthWrite: p.depthWrite !== false,
+        vertexColors: !!p.vertexColors,
+        fog: p.fog !== false
+      });
+      // Compatibility fields used by existing Product Joe code.
+      mat.roughness = p.roughness == null ? 0.85 : p.roughness;
+      mat.metalness = p.metalness == null ? 0 : p.metalness;
+      mat.roughnessMap = null;
+      mat.metalnessMap = null;
+      mat.envMapIntensity = 0;
+      return mat;
+    }
+    BraveStandardMaterial.prototype = NativeLambert.prototype;
+    try{ Object.setPrototypeOf(BraveStandardMaterial, NativeLambert); }catch(e){}
+    THREE.MeshStandardMaterial = BraveStandardMaterial;
+
+    // Keep dynamic lights, but cap their cost/intensity.
+    var NativePointLight = THREE.PointLight;
+    function BravePointLight(color,intensity,distance,decay){
+      var light = new NativePointLight(
+        color,
+        Math.min(intensity == null ? 1 : intensity, 0.72),
+        distance ? Math.min(distance, 8) : 0,
+        decay
+      );
+      light.castShadow = false;
+      return light;
+    }
+    BravePointLight.prototype = NativePointLight.prototype;
+    try{ Object.setPrototypeOf(BravePointLight, NativePointLight); }catch(e){}
+    THREE.PointLight = BravePointLight;
+  })();
+  </script>
 
   <script>
   (() => {
     "use strict";
-    let __braveLivePointLights = 0;
-    function makeBraveLitePointLight(color,intensity,distance,decay){
-      const light = new THREE.PointLight(color, Math.min(Number(intensity)||0, 0.75), Math.min(Number(distance)||4, 5), decay);
-      light.castShadow = false;
-      __braveLivePointLights += 1;
-      if(__braveLivePointLights > 6){ light.visible = false; light.intensity = 0; }
-      return light;
-    }
 
     window.addEventListener("error", function(e){
       var msg = String((e && e.message) || "");
@@ -4707,7 +4752,7 @@ const wrap = document.getElementById("gameWrap");
     const chamberText = document.getElementById("chamberText");
     const jewelText = document.getElementById("jewelText");
     const soundBtn = document.getElementById("soundBtn");
-    const LOW_POWER = true;
+    const LOW_POWER = true; // Brave desktop compatibility build: deliberately reduced GPU load.
 
     let soundOn = true;
     let audioCtx = null;
@@ -4780,19 +4825,19 @@ const wrap = document.getElementById("gameWrap");
     var VILLAGER_TOTAL = CHAMBER_QUESTION_COUNTS.villager;
     var SUN_SEAL_TOTAL = CHAMBER_QUESTION_COUNTS.sun;
 
-    const DOOR_OPEN_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/976802ad774b985452e6b06c9945e6378bcd1822/krnbeatz-tectonic-passage-418836.mp3?ujv=20260927_brave3d_v2";
-    const DOG_BARK_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/7624dfdc30086ecb527a88c14ae2ab1bdf30c457/dragon-studio-dog-bark-382732.mp3?ujv=20260927_brave3d_v2";
+    const DOOR_OPEN_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/976802ad774b985452e6b06c9945e6378bcd1822/krnbeatz-tectonic-passage-418836.mp3?ujv=20260927_brave3d_v1";
+    const DOG_BARK_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/7624dfdc30086ecb527a88c14ae2ab1bdf30c457/dragon-studio-dog-bark-382732.mp3?ujv=20260927_brave3d_v1";
     const DOG_BARK_SOUND_VOLUME = 0.82;
-    const BG_AMBIENCE_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/24ea600bc30398e686c336f90dd56583b3182a9d/freesound_community-cavernous-drone-6996.mp3?ujv=20260927_brave3d_v2";
+    const BG_AMBIENCE_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/24ea600bc30398e686c336f90dd56583b3182a9d/freesound_community-cavernous-drone-6996.mp3?ujv=20260927_brave3d_v1";
     const BG_AMBIENCE_VOLUME = 0.18;
-    const MAGIC_APPEAR_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/0934fad80f47da28e3710c2fc085eb2244f2da27/universfield-magical-twinkle-242245.mp3?ujv=20260927_brave3d_v2";
+    const MAGIC_APPEAR_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/0934fad80f47da28e3710c2fc085eb2244f2da27/universfield-magical-twinkle-242245.mp3?ujv=20260927_brave3d_v1";
     const MAGIC_APPEAR_VOLUME = 0.55;
     const VILLAGER_FREE_SOUND_VOLUME = 0.82;
     const VILLAGER_MODEL_URLS = Object.freeze([
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Female_1.gltf?ujv=20260927_brave3d_v2",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Female_2.gltf?ujv=20260927_brave3d_v2",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Male_1.gltf?ujv=20260927_brave3d_v2",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Male_2.gltf?ujv=20260927_brave3d_v2"
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Female_1.gltf?ujv=20260927_brave3d_v1",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Female_2.gltf?ujv=20260927_brave3d_v1",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Male_1.gltf?ujv=20260927_brave3d_v1",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/6c523423e259b0ac41b6967d19775aa5673290be/Character_Male_2.gltf?ujv=20260927_brave3d_v1"
     ]);
     // Split 4 imported character files across 6 villagers.
     const VILLAGER_MODEL_ASSIGNMENTS = Object.freeze([0,1,2,3,0,2]);
@@ -4813,17 +4858,17 @@ const wrap = document.getElementById("gameWrap");
     const villagerFaceTarget = new THREE.Vector3();
     const villagerHolderWorldPos = new THREE.Vector3();
     const VILLAGER_FACE_USER_YAW_FLIP = Math.PI;
-    const CROWD_CHEER_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/53e1970286f37ceda52177720f1759ca9504350f/spinopel-running-through-the-village-345726.mp3?ujv=20260927_brave3d_v2";
+    const CROWD_CHEER_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/53e1970286f37ceda52177720f1759ca9504350f/spinopel-running-through-the-village-345726.mp3?ujv=20260927_brave3d_v1";
     const CROWD_CHEER_VOLUME = 0.72;
-    const ENDING_CHEER_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/1d2b6f9af8ccca12099ea5014982b424b36f927e/storegraphic-crowd-cheers-314919.mp3?ujv=20260927_brave3d_v2";
+    const ENDING_CHEER_SOUND_URL = "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/1d2b6f9af8ccca12099ea5014982b424b36f927e/storegraphic-crowd-cheers-314919.mp3?ujv=20260927_brave3d_v1";
     const ENDING_CHEER_VOLUME = 0.78;
     const VILLAGER_FREE_SOUND_URLS = Object.freeze([
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/faespencer-thank-you-for-everything-you-do-female-spoken-207328.mp3?ujv=20260927_brave3d_v2",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/freesound_community-thank-you-99932.mp3?ujv=20260927_brave3d_v2",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/kittenstrike1-thank-you-168416.mp3?ujv=20260927_brave3d_v2",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/saboteurcomics-oh-yeah-407752%20(1?ujv=20260927_brave3d_v2).mp3",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/universfield-yeah-boy-114748.mp3?ujv=20260927_brave3d_v2",
-      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/519aef73d72e39eea2eb7ada4dbbe7719cdcd0e7/freesound_community-083725_person-saying-quotyeahquot-38404.mp3?ujv=20260927_brave3d_v2"
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/faespencer-thank-you-for-everything-you-do-female-spoken-207328.mp3?ujv=20260927_brave3d_v1",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/freesound_community-thank-you-99932.mp3?ujv=20260927_brave3d_v1",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/kittenstrike1-thank-you-168416.mp3?ujv=20260927_brave3d_v1",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/saboteurcomics-oh-yeah-407752%20(1?ujv=20260927_brave3d_v1).mp3",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/96800364d241b696ba445b76c761fef6b512bcee/universfield-yeah-boy-114748.mp3?ujv=20260927_brave3d_v1",
+      "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product/519aef73d72e39eea2eb7ada4dbbe7719cdcd0e7/freesound_community-083725_person-saying-quotyeahquot-38404.mp3?ujv=20260927_brave3d_v1"
     ]);
     let doorOpeningAudio = null;
     let dogBarkAudio = null;
@@ -4832,9 +4877,9 @@ const wrap = document.getElementById("gameWrap");
     let crowdCheerAudio = null;
     let endingCheerAudio = null;
     const villagerFreeAudios = [];
-    const SAVE_KEY = "p3_multiply_egyptian_maze_progress_brave3d_v2";
+    const SAVE_KEY = "p3_multiply_egyptian_maze_progress_brave3d_v1";
     const TEACHER_TOOL_PASSWORD = "67";
-    const TEACHER_TOOL_SESSION_KEY = "uncleJoeTeacherToolsUnlockedBrave3D";
+    const TEACHER_TOOL_SESSION_KEY = "uncleJoeTeacherToolsUnlocked_brave3d";
     let teacherToolsUnlocked = false;
     let pendingTeacherToolAction = null;
     let progressLoaded = false;
@@ -5749,7 +5794,7 @@ const wrap = document.getElementById("gameWrap");
     const INDOOR_BACKGROUND = new THREE.Color(0x070403);
     const OUTDOOR_BACKGROUND = new THREE.Color(0x85d8ff);
     scene.background = INDOOR_BACKGROUND.clone();
-    scene.fog = new THREE.FogExp2(0x1d1108, 0.038);
+    scene.fog = new THREE.FogExp2(0x1d1108, LOW_POWER ? 0.06 : 0.055);
 
     const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 120);
     camera.position.set(0, 1.65, 6.5);
@@ -5757,7 +5802,7 @@ const wrap = document.getElementById("gameWrap");
 
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference:"low-power" });
+      renderer = new THREE.WebGLRenderer({ antialias:false, powerPreference:"default", precision:"mediump" });
     } catch (error) {
       const box = document.getElementById("runtimeErrorBox");
       if (box) {
@@ -5774,7 +5819,7 @@ const wrap = document.getElementById("gameWrap");
         box.textContent = "The 3D graphics stopped. Reload the page to continue from your saved progress.";
       }
     });
-    renderer.setPixelRatio(1);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1));
     renderer.setSize(window.innerWidth, window.innerHeight);
     // Performance version: shadows are disabled to reduce GPU load, especially in Chamber 2.
     renderer.shadowMap.enabled = false;
@@ -5824,56 +5869,56 @@ const wrap = document.getElementById("gameWrap");
       wasSitting:false
     };
 
-    const matSand = new THREE.MeshLambertMaterial({ color:0xb98b4c, roughness:.9, metalness:.03 });
-    const matStone = new THREE.MeshLambertMaterial({ color:0x7a532d, roughness:.95, metalness:.02 });
-    const matDarkStone = new THREE.MeshLambertMaterial({ color:0x4f331d, roughness:.98, metalness:.02 });
-    const matDoor = new THREE.MeshLambertMaterial({ color:0x40210f, roughness:.94, metalness:.03 });
-    const matTablet = new THREE.MeshLambertMaterial({ color:0x2a3555, roughness:.88, metalness:.02 });
-    const matGlow = new THREE.MeshLambertMaterial({ color:0xf2d15a, emissive:0xc78e1d, emissiveIntensity:1.15, roughness:.45 });
-    const matRuby = new THREE.MeshLambertMaterial({ color:0xe91954, emissive:0xff185e, emissiveIntensity:.95, roughness:.28, metalness:.2 });
-    const matBlack = new THREE.MeshLambertMaterial({ color:0x140d08, roughness:1 });
-    const matOutdoorGrass = new THREE.MeshLambertMaterial({ color:0x4b9f43, roughness:.92, metalness:0, emissive:0x123413, emissiveIntensity:.08 });
-    const matOutdoorPath = new THREE.MeshLambertMaterial({ color:0x0b5f2a, roughness:.9, metalness:0, emissive:0x062010, emissiveIntensity:.10 });
-    const matButtonBrownMat = new THREE.MeshLambertMaterial({ color:0x7b4a24, roughness:.92, metalness:.01, emissive:0x2a1205, emissiveIntensity:.08 });
-    const matHedge = new THREE.MeshLambertMaterial({ color:0x2f8f3b, roughness:.95, metalness:0, emissive:0x0b3d14, emissiveIntensity:.08 });
-    const matPyramidSun = new THREE.MeshLambertMaterial({ color:0xdab247, roughness:.84, metalness:.02, emissive:0x5a3600, emissiveIntensity:.10 });
-    const matPyramidFace = new THREE.MeshLambertMaterial({ color:0x1f3f86, roughness:.88, metalness:.02, emissive:0x101f4e, emissiveIntensity:.12 });
-    const matStartDarkFloor = new THREE.MeshLambertMaterial({
+    const matSand = new THREE.MeshStandardMaterial({ color:0xb98b4c, roughness:.9, metalness:.03 });
+    const matStone = new THREE.MeshStandardMaterial({ color:0x7a532d, roughness:.95, metalness:.02 });
+    const matDarkStone = new THREE.MeshStandardMaterial({ color:0x4f331d, roughness:.98, metalness:.02 });
+    const matDoor = new THREE.MeshStandardMaterial({ color:0x40210f, roughness:.94, metalness:.03 });
+    const matTablet = new THREE.MeshStandardMaterial({ color:0x2a3555, roughness:.88, metalness:.02 });
+    const matGlow = new THREE.MeshStandardMaterial({ color:0xf2d15a, emissive:0xc78e1d, emissiveIntensity:1.15, roughness:.45 });
+    const matRuby = new THREE.MeshStandardMaterial({ color:0xe91954, emissive:0xff185e, emissiveIntensity:.95, roughness:.28, metalness:.2 });
+    const matBlack = new THREE.MeshStandardMaterial({ color:0x140d08, roughness:1 });
+    const matOutdoorGrass = new THREE.MeshStandardMaterial({ color:0x4b9f43, roughness:.92, metalness:0, emissive:0x123413, emissiveIntensity:.08 });
+    const matOutdoorPath = new THREE.MeshStandardMaterial({ color:0x0b5f2a, roughness:.9, metalness:0, emissive:0x062010, emissiveIntensity:.10 });
+    const matButtonBrownMat = new THREE.MeshStandardMaterial({ color:0x7b4a24, roughness:.92, metalness:.01, emissive:0x2a1205, emissiveIntensity:.08 });
+    const matHedge = new THREE.MeshStandardMaterial({ color:0x2f8f3b, roughness:.95, metalness:0, emissive:0x0b3d14, emissiveIntensity:.08 });
+    const matPyramidSun = new THREE.MeshStandardMaterial({ color:0xdab247, roughness:.84, metalness:.02, emissive:0x5a3600, emissiveIntensity:.10 });
+    const matPyramidFace = new THREE.MeshStandardMaterial({ color:0xa8783f, roughness:.94, metalness:0 });
+    const matStartDarkFloor = new THREE.MeshStandardMaterial({
       color:0x2b1206,
       roughness:1,
       metalness:0,
       emissive:0x080201,
       emissiveIntensity:.04
     });
-    const matStartDarkWall = new THREE.MeshLambertMaterial({
+    const matStartDarkWall = new THREE.MeshStandardMaterial({
       color:0x210906,
       roughness:1,
       metalness:0,
       emissive:0x040100,
       emissiveIntensity:.035
     });
-    const matTorchDarkFloor = new THREE.MeshLambertMaterial({
+    const matTorchDarkFloor = new THREE.MeshStandardMaterial({
       color:0x080402,
       roughness:1,
       metalness:0,
       emissive:0x010000,
       emissiveIntensity:.03
     });
-    const matTorchDarkWall = new THREE.MeshLambertMaterial({
+    const matTorchDarkWall = new THREE.MeshStandardMaterial({
       color:0x120704,
       roughness:1,
       metalness:0,
       emissive:0x020000,
       emissiveIntensity:.035
     });
-    const matBrightChamberFloor = new THREE.MeshLambertMaterial({
+    const matBrightChamberFloor = new THREE.MeshStandardMaterial({
       color:0xd7a95f,
       roughness:.78,
       metalness:.02,
       emissive:0x3b2208,
       emissiveIntensity:.20
     });
-    const matBrightChamberWall = new THREE.MeshLambertMaterial({
+    const matBrightChamberWall = new THREE.MeshStandardMaterial({
       color:0xb9854d,
       roughness:.82,
       metalness:.02,
@@ -5881,21 +5926,21 @@ const wrap = document.getElementById("gameWrap");
       emissiveIntensity:.22
     });
 
-    const matC3Floor = new THREE.MeshLambertMaterial({
+    const matC3Floor = new THREE.MeshStandardMaterial({
       color:0xc7934f,
       roughness:.82,
       metalness:.03,
       emissive:0x2f1705,
       emissiveIntensity:.42
     });
-    const matC3Wall = new THREE.MeshLambertMaterial({
+    const matC3Wall = new THREE.MeshStandardMaterial({
       color:0xa4743f,
       roughness:.88,
       metalness:.02,
       emissive:0x2d1606,
       emissiveIntensity:.48
     });
-    const matC3Door = new THREE.MeshLambertMaterial({
+    const matC3Door = new THREE.MeshStandardMaterial({
       color:0x9a6a35,
       roughness:.84,
       metalness:.06,
@@ -5910,10 +5955,10 @@ const wrap = document.getElementById("gameWrap");
       companion.head = null;
       companion.tail = null;
 
-      const bodyMat = new THREE.MeshLambertMaterial({ color:0xd07a2d, roughness:.86, metalness:.02 });
-      const creamMat = new THREE.MeshLambertMaterial({ color:0xf5ead7, roughness:.9, metalness:0 });
-      const darkMat = new THREE.MeshLambertMaterial({ color:0x241208, roughness:.8, metalness:0 });
-      const legMat = new THREE.MeshLambertMaterial({ color:0xe7cfb0, roughness:.94, metalness:0 });
+      const bodyMat = new THREE.MeshStandardMaterial({ color:0xd07a2d, roughness:.86, metalness:.02 });
+      const creamMat = new THREE.MeshStandardMaterial({ color:0xf5ead7, roughness:.9, metalness:0 });
+      const darkMat = new THREE.MeshStandardMaterial({ color:0x241208, roughness:.8, metalness:0 });
+      const legMat = new THREE.MeshStandardMaterial({ color:0xe7cfb0, roughness:.94, metalness:0 });
 
       const body = new THREE.Mesh(new THREE.BoxGeometry(.58,.30,.28), bodyMat);
       body.position.set(0,.34,0);
@@ -5948,7 +5993,7 @@ const wrap = document.getElementById("gameWrap");
       headRoot.add(eyeR);
 
       const earGeo = new THREE.ConeGeometry(.05,.13,4);
-      const earMat = new THREE.MeshLambertMaterial({ color:0x9f4d1f, roughness:.9, metalness:0 });
+      const earMat = new THREE.MeshStandardMaterial({ color:0x9f4d1f, roughness:.9, metalness:0 });
       const earLRoot = new THREE.Group();
       earLRoot.position.set(-.04,.14,.08);
       const earL = new THREE.Mesh(earGeo, earMat);
@@ -6309,7 +6354,7 @@ const wrap = document.getElementById("gameWrap");
       companion.group.add(shadow);
       companion.shadow = shadow;
 
-      const dogLight = makeBraveLitePointLight(0xffc66d, LOW_POWER ? .55 : .85, 2.6);
+      const dogLight = new THREE.PointLight(0xffc66d, LOW_POWER ? .55 : .85, 2.6);
       dogLight.position.set(0,.72,0);
       companion.bodyPivot.add(dogLight);
       companion.light = dogLight;
@@ -6336,9 +6381,9 @@ const wrap = document.getElementById("gameWrap");
     }
 
     function addAmbient(){
-      const hemi = new THREE.HemisphereLight(0xffe2a3, 0x1a0c04, 0.92);
+      const hemi = new THREE.HemisphereLight(0xffe2a3, 0x1a0c04, LOW_POWER ? 0.46 : 0.62);
       scene.add(hemi);
-      const moon = new THREE.DirectionalLight(0xffddaa, 0.52);
+      const moon = new THREE.DirectionalLight(0xffddaa, LOW_POWER ? 0.32 : 0.46);
       moon.position.set(-5, 12, 8);
       moon.castShadow = !LOW_POWER;
       if(moon.castShadow){
@@ -6390,14 +6435,14 @@ const wrap = document.getElementById("gameWrap");
     function addTorch(x,z,side="wall"){
       const group = new THREE.Group();
       group.position.set(x,1.35,z);
-      const holder = new THREE.Mesh(new THREE.CylinderGeometry(.055,.075,.62,8), new THREE.MeshLambertMaterial({color:0x3a2210,roughness:.6,metalness:.35}));
+      const holder = new THREE.Mesh(new THREE.CylinderGeometry(.055,.075,.62,8), new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.6,metalness:.35}));
       holder.rotation.x = Math.PI/2;
       holder.castShadow = !LOW_POWER;
       group.add(holder);
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(.18,.42,14), new THREE.MeshLambertMaterial({color:0xffb129,emissive:0xff7a00,emissiveIntensity:1.9,roughness:.3}));
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(.18,.42,14), new THREE.MeshStandardMaterial({color:0xffb129,emissive:0xff7a00,emissiveIntensity:1.9,roughness:.3}));
       flame.position.y = .3;
       group.add(flame);
-      const light = makeBraveLitePointLight(0xff9b34, LOW_POWER ? 1.25 : 1.7, LOW_POWER ? 7 : 9, 1.9);
+      const light = new THREE.PointLight(0xff9b34, LOW_POWER ? 1.25 : 1.7, LOW_POWER ? 7 : 9, 1.9);
       light.position.y = .2;
       light.castShadow = false;
       group.add(light);
@@ -6414,17 +6459,17 @@ const wrap = document.getElementById("gameWrap");
       group.position.set(x,1.35,z);
       const holder = new THREE.Mesh(
         new THREE.CylinderGeometry(.055,.075,.62,8),
-        new THREE.MeshLambertMaterial({color:0x2a1709,roughness:.72,metalness:.25,emissive:0x080200,emissiveIntensity:.05})
+        new THREE.MeshStandardMaterial({color:0x2a1709,roughness:.72,metalness:.25,emissive:0x080200,emissiveIntensity:.05})
       );
       holder.rotation.x = Math.PI/2;
       group.add(holder);
       const flame = new THREE.Mesh(
         new THREE.ConeGeometry(.16,.34,14),
-        new THREE.MeshLambertMaterial({color:0xff9b22,emissive:0xff5a00,emissiveIntensity:.85,roughness:.45})
+        new THREE.MeshStandardMaterial({color:0xff9b22,emissive:0xff5a00,emissiveIntensity:.85,roughness:.45})
       );
       flame.position.y = .28;
       group.add(flame);
-      const light = makeBraveLitePointLight(0xff8a28, LOW_POWER ? .38 : .55, LOW_POWER ? 3.2 : 4.0, 2.2);
+      const light = new THREE.PointLight(0xff8a28, LOW_POWER ? .38 : .55, LOW_POWER ? 3.2 : 4.0, 2.2);
       light.position.y = .2;
       light.castShadow = false;
       group.add(light);
@@ -6442,7 +6487,7 @@ const wrap = document.getElementById("gameWrap");
 
       const holder = new THREE.Mesh(
         new THREE.CylinderGeometry(.055,.075,.62,8),
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshStandardMaterial({
           color:0x1f1208,
           roughness:.75,
           metalness:.18,
@@ -6457,7 +6502,7 @@ const wrap = document.getElementById("gameWrap");
       // Tiny ember only, no useful light. The numbered puzzle torch gives the real glow.
       const ember = new THREE.Mesh(
         new THREE.SphereGeometry(.08,10,8),
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshStandardMaterial({
           color:0x4a1b05,
           emissive:0x2a0800,
           emissiveIntensity:.18,
@@ -6480,27 +6525,27 @@ const wrap = document.getElementById("gameWrap");
 
       const base = new THREE.Mesh(
         new THREE.CylinderGeometry(.42,.48,.22,18),
-        new THREE.MeshLambertMaterial({color:0x5a2a0b,roughness:.75,metalness:.1,emissive:0x170703,emissiveIntensity:.10})
+        new THREE.MeshStandardMaterial({color:0x5a2a0b,roughness:.75,metalness:.1,emissive:0x170703,emissiveIntensity:.10})
       );
       base.castShadow = !LOW_POWER;
       group.add(base);
 
       const button = new THREE.Mesh(
         new THREE.CylinderGeometry(.24,.27,.16,18),
-        new THREE.MeshLambertMaterial({color:0xd9952b,roughness:.5,metalness:.22,emissive:0x3a1b03,emissiveIntensity:.18})
+        new THREE.MeshStandardMaterial({color:0xd9952b,roughness:.5,metalness:.22,emissive:0x3a1b03,emissiveIntensity:.18})
       );
       button.position.y = .19;
       button.castShadow = !LOW_POWER;
       group.add(button);
 
-      const previewLight = makeBraveLitePointLight(0xffd16b, 0, LOW_POWER ? 2.6 : 3.0, 2.1);
+      const previewLight = new THREE.PointLight(0xffd16b, 0, LOW_POWER ? 2.6 : 3.0, 2.1);
       previewLight.position.set(0,.55,0);
       previewLight.castShadow = false;
       group.add(previewLight);
 
       const previewRing = new THREE.Mesh(
         new THREE.TorusGeometry(.48,.035,10,32),
-        new THREE.MeshLambertMaterial({color:0xffec99,emissive:0xffb703,emissiveIntensity:.28,transparent:true,opacity:.92,roughness:.35})
+        new THREE.MeshStandardMaterial({color:0xffec99,emissive:0xffb703,emissiveIntensity:.28,transparent:true,opacity:.92,roughness:.35})
       );
       previewRing.rotation.x = Math.PI/2;
       previewRing.position.y = .08;
@@ -6523,14 +6568,14 @@ const wrap = document.getElementById("gameWrap");
       // Nearby torch starts unlit; it lights after the question is solved.
       const torchGroup = new THREE.Group();
       torchGroup.position.set(side==="left" ? -.78 : .78,1.1,0);
-      const holder = new THREE.Mesh(new THREE.CylinderGeometry(.045,.06,.55,8), new THREE.MeshLambertMaterial({color:0x3a2210,roughness:.6,metalness:.35}));
+      const holder = new THREE.Mesh(new THREE.CylinderGeometry(.045,.06,.55,8), new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.6,metalness:.35}));
       holder.rotation.x = Math.PI/2;
       torchGroup.add(holder);
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(.16,.36,14), new THREE.MeshLambertMaterial({color:0x333333,emissive:0x000000,emissiveIntensity:0,roughness:.6}));
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(.16,.36,14), new THREE.MeshStandardMaterial({color:0x333333,emissive:0x000000,emissiveIntensity:0,roughness:.6}));
       flame.position.y = .28;
       flame.visible = false;
       torchGroup.add(flame);
-      const light = makeBraveLitePointLight(0xff9b34, 0, 2.8, 2.4);
+      const light = new THREE.PointLight(0xff9b34, 0, 2.8, 2.4);
       light.position.y = .22;
       torchGroup.add(light);
       group.add(torchGroup);
@@ -6594,7 +6639,7 @@ const wrap = document.getElementById("gameWrap");
       const group = new THREE.Group();
       group.position.set(0,1.05,-23.8);
       group.visible = false;
-      const topaz = new THREE.Mesh(new THREE.OctahedronGeometry(.62,0), new THREE.MeshLambertMaterial({
+      const topaz = new THREE.Mesh(new THREE.OctahedronGeometry(.62,0), new THREE.MeshStandardMaterial({
         color:0xffc247,
         roughness:.18,
         metalness:.15,
@@ -6603,15 +6648,15 @@ const wrap = document.getElementById("gameWrap");
       }));
       topaz.castShadow = !LOW_POWER;
       group.add(topaz);
-      const halo = new THREE.Mesh(new THREE.TorusGeometry(.78,.025,10,40), new THREE.MeshLambertMaterial({color:0xffe28a,emissive:0xffb833,emissiveIntensity:.9,roughness:.25}));
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(.78,.025,10,40), new THREE.MeshStandardMaterial({color:0xffe28a,emissive:0xffb833,emissiveIntensity:.9,roughness:.25}));
       halo.rotation.x = Math.PI/2;
       group.add(halo);
-      const light = makeBraveLitePointLight(0xffb833, LOW_POWER ? 1.8 : 2.4, 8, 1.5);
+      const light = new THREE.PointLight(0xffb833, LOW_POWER ? 1.8 : 2.4, 8, 1.5);
       light.position.set(0,.35,0);
       group.add(light);
       const keyPromptPad = new THREE.Mesh(
         new THREE.CylinderGeometry(1.35,1.48,.10,40),
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshStandardMaterial({
           color:0x3b2508,
           roughness:.45,
           metalness:.08,
@@ -6644,7 +6689,7 @@ const wrap = document.getElementById("gameWrap");
       const group = new THREE.Group();
       group.position.set(0,1.05,-34.0);
       group.visible = false;
-      const emerald = new THREE.Mesh(new THREE.OctahedronGeometry(.62,0), new THREE.MeshLambertMaterial({
+      const emerald = new THREE.Mesh(new THREE.OctahedronGeometry(.62,0), new THREE.MeshStandardMaterial({
         color:0x22c55e,
         roughness:.16,
         metalness:.14,
@@ -6653,10 +6698,10 @@ const wrap = document.getElementById("gameWrap");
       }));
       emerald.castShadow = !LOW_POWER;
       group.add(emerald);
-      const halo = new THREE.Mesh(new THREE.TorusGeometry(.78,.025,10,40), new THREE.MeshLambertMaterial({color:0xbbf7d0,emissive:0x22c55e,emissiveIntensity:.9,roughness:.25}));
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(.78,.025,10,40), new THREE.MeshStandardMaterial({color:0xbbf7d0,emissive:0x22c55e,emissiveIntensity:.9,roughness:.25}));
       halo.rotation.x = Math.PI/2;
       group.add(halo);
-      const light = makeBraveLitePointLight(0x22c55e, LOW_POWER ? 1.8 : 2.4, 8, 1.5);
+      const light = new THREE.PointLight(0x22c55e, LOW_POWER ? 1.8 : 2.4, 8, 1.5);
       light.position.set(0,.35,0);
       group.add(light);
       scene.add(group);
@@ -6676,7 +6721,7 @@ const wrap = document.getElementById("gameWrap");
       // A small glowing altar so the wand clearly looks like the chamber reward.
       const altar = new THREE.Mesh(
         new THREE.CylinderGeometry(.95,1.12,.38,32),
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshStandardMaterial({
           color:0xb98531,roughness:.52,metalness:.22,
           emissive:0x3a1b03,emissiveIntensity:.25
         })
@@ -6688,7 +6733,7 @@ const wrap = document.getElementById("gameWrap");
 
       const altarRing = new THREE.Mesh(
         new THREE.TorusGeometry(.98,.045,14,64),
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshStandardMaterial({
           color:0xffe08a,roughness:.2,metalness:.55,
           emissive:0xfacc15,emissiveIntensity:1.05
         })
@@ -6724,7 +6769,7 @@ const wrap = document.getElementById("gameWrap");
       group.add(goldBeacon);
 
       // Wand shaft: brighter and longer, tilted so it is recognisable.
-      const rodMat = new THREE.MeshLambertMaterial({
+      const rodMat = new THREE.MeshStandardMaterial({
         color:0x8b5e16,roughness:.38,metalness:.32,
         emissive:0x6b3f11,emissiveIntensity:.36
       });
@@ -6733,7 +6778,7 @@ const wrap = document.getElementById("gameWrap");
       rod.castShadow = !LOW_POWER;
       group.add(rod);
 
-      const gripMat = new THREE.MeshLambertMaterial({
+      const gripMat = new THREE.MeshStandardMaterial({
         color:0x2b1809,roughness:.65,metalness:.18,
         emissive:0x120704,emissiveIntensity:.16
       });
@@ -6744,7 +6789,7 @@ const wrap = document.getElementById("gameWrap");
       group.add(grip);
 
       // Sapphire crystal at the tip.
-      const sapphireMat = new THREE.MeshLambertMaterial({
+      const sapphireMat = new THREE.MeshStandardMaterial({
         color:0x5ee7ff,roughness:.06,metalness:.42,
         emissive:0x22d3ee,emissiveIntensity:2.25,
         transparent:true,opacity:.96
@@ -6755,7 +6800,7 @@ const wrap = document.getElementById("gameWrap");
       group.add(tip);
 
       // Golden star crown.
-      const starMat = new THREE.MeshLambertMaterial({
+      const starMat = new THREE.MeshStandardMaterial({
         color:0xfff08a,roughness:.16,metalness:.72,
         emissive:0xfacc15,emissiveIntensity:1.85
       });
@@ -6765,7 +6810,7 @@ const wrap = document.getElementById("gameWrap");
       group.add(star);
 
       // Orbiting magical rings.
-      const haloMat = new THREE.MeshLambertMaterial({
+      const haloMat = new THREE.MeshStandardMaterial({
         color:0xbfdbfe,emissive:0x60a5fa,emissiveIntensity:1.45,
         roughness:.12,metalness:.34,transparent:true,opacity:.95
       });
@@ -6781,7 +6826,7 @@ const wrap = document.getElementById("gameWrap");
       group.add(halo2);
 
       // Sparkles around the wand.
-      const sparkleMat = new THREE.MeshLambertMaterial({
+      const sparkleMat = new THREE.MeshStandardMaterial({
         color:0xfafcff,roughness:.08,metalness:.25,
         emissive:0xfef9c3,emissiveIntensity:1.8
       });
@@ -6824,11 +6869,11 @@ const wrap = document.getElementById("gameWrap");
       label.position.set(0,1.92,.04);
       group.add(label);
 
-      const light = makeBraveLitePointLight(0x8bd3ff, LOW_POWER ? 4.0 : 6.4, 13, 1.25);
+      const light = new THREE.PointLight(0x8bd3ff, LOW_POWER ? 4.0 : 6.4, 13, 1.25);
       light.position.set(.38,1.14,.25);
       group.add(light);
 
-      const goldLight = makeBraveLitePointLight(0xffd86b, LOW_POWER ? 1.8 : 2.8, 9, 1.6);
+      const goldLight = new THREE.PointLight(0xffd86b, LOW_POWER ? 1.8 : 2.8, 9, 1.6);
       goldLight.position.set(-.28,.12,.35);
       group.add(goldLight);
 
@@ -7210,14 +7255,14 @@ const wrap = document.getElementById("gameWrap");
       const colour = getVillagerColour(idx);
       const belt = new THREE.Mesh(
         new THREE.TorusGeometry(.42,.035,10,44),
-        new THREE.MeshLambertMaterial({color:colour,emissive:colour,emissiveIntensity:.35,roughness:.4,metalness:.05})
+        new THREE.MeshStandardMaterial({color:colour,emissive:colour,emissiveIntensity:.35,roughness:.4,metalness:.05})
       );
       belt.rotation.x = Math.PI / 2;
       belt.position.set(0,1.18,.02);
       wrapper.add(belt);
 
       // Local light: makes the GLTF visible inside the dark pyramid chamber.
-      const helperLight = makeBraveLitePointLight(0xfff1d2, 1.25, 7.0);
+      const helperLight = new THREE.PointLight(0xfff1d2, 1.25, 7.0);
       helperLight.position.set(0,2.7,.55);
       wrapper.add(helperLight);
 
@@ -7286,7 +7331,7 @@ const wrap = document.getElementById("gameWrap");
 
       const base = new THREE.Mesh(
         new THREE.CylinderGeometry(.86,.96,.14,28),
-        new THREE.MeshLambertMaterial({color:getVillagerColour(idx),roughness:.52,metalness:.08,emissive:getVillagerColour(idx),emissiveIntensity:.18})
+        new THREE.MeshStandardMaterial({color:getVillagerColour(idx),roughness:.52,metalness:.08,emissive:getVillagerColour(idx),emissiveIntensity:.18})
       );
       base.position.y = .07;
       group.add(base);
@@ -7303,7 +7348,7 @@ const wrap = document.getElementById("gameWrap");
 
       const ring = new THREE.Mesh(
         new THREE.TorusGeometry(1.14,.04,12,56),
-        new THREE.MeshLambertMaterial({color:getVillagerColour(idx),emissive:getVillagerColour(idx),emissiveIntensity:.9,transparent:true,opacity:.9})
+        new THREE.MeshStandardMaterial({color:getVillagerColour(idx),emissive:getVillagerColour(idx),emissiveIntensity:.9,transparent:true,opacity:.9})
       );
       ring.rotation.x = Math.PI/2;
       ring.position.y = .18;
@@ -7330,7 +7375,7 @@ const wrap = document.getElementById("gameWrap");
       group.add(label);
 
       // Warmer light so the villagers feel brighter and less scary.
-      const light = makeBraveLitePointLight(0xffefc2,1.85,7.2,1.45);
+      const light = new THREE.PointLight(0xffefc2,1.85,7.2,1.45);
       light.position.set(0,1.75,.45);
       group.add(light);
 
@@ -7405,28 +7450,28 @@ const wrap = document.getElementById("gameWrap");
       const group = new THREE.Group();
       group.position.set(x,0,z);
 
-      const metalDark = new THREE.MeshLambertMaterial({
+      const metalDark = new THREE.MeshStandardMaterial({
         color:0x4a3009,
         roughness:.38,
         metalness:.42,
         emissive:0x160a02,
         emissiveIntensity:.18
       });
-      const brassMat = new THREE.MeshLambertMaterial({
+      const brassMat = new THREE.MeshStandardMaterial({
         color:0xd99a25,
         roughness:.30,
         metalness:.70,
         emissive:0x7c3f00,
         emissiveIntensity:.38
       });
-      const brightBrassMat = new THREE.MeshLambertMaterial({
+      const brightBrassMat = new THREE.MeshStandardMaterial({
         color:0xffd166,
         roughness:.22,
         metalness:.78,
         emissive:0xf59e0b,
         emissiveIntensity:.72
       });
-      const openMat = new THREE.MeshLambertMaterial({
+      const openMat = new THREE.MeshStandardMaterial({
         color:0xfef3c7,
         roughness:.18,
         metalness:.82,
@@ -7504,7 +7549,7 @@ const wrap = document.getElementById("gameWrap");
 
       const ring = new THREE.Mesh(
         new THREE.TorusGeometry(1.04,.045,12,80),
-        new THREE.MeshLambertMaterial({color:0xfacc15,emissive:0xd97706,emissiveIntensity:.75,transparent:true,opacity:.88})
+        new THREE.MeshStandardMaterial({color:0xfacc15,emissive:0xd97706,emissiveIntensity:.75,transparent:true,opacity:.88})
       );
       ring.rotation.x = Math.PI/2;
       ring.position.y = .20;
@@ -7517,7 +7562,7 @@ const wrap = document.getElementById("gameWrap");
       label.position.set(0,1.55,.05);
       group.add(label);
 
-      const light = makeBraveLitePointLight(0xfacc15,LOW_POWER ? .7 : 1.05,7,1.5);
+      const light = new THREE.PointLight(0xfacc15,LOW_POWER ? .7 : 1.05,7,1.5);
       light.position.set(0,.85,.35);
       group.add(light);
 
@@ -7625,7 +7670,7 @@ const wrap = document.getElementById("gameWrap");
       group.scale.set(1.75,1.75,1.75);
       group.visible = false;
 
-      const goldMat = new THREE.MeshLambertMaterial({
+      const goldMat = new THREE.MeshStandardMaterial({
         color:0xffd166,
         roughness:.18,
         metalness:.78,
@@ -7633,7 +7678,7 @@ const wrap = document.getElementById("gameWrap");
         emissiveIntensity:1.45
       });
 
-      const brightGoldMat = new THREE.MeshLambertMaterial({
+      const brightGoldMat = new THREE.MeshStandardMaterial({
         color:0xfff3b0,
         roughness:.12,
         metalness:.82,
@@ -7643,7 +7688,7 @@ const wrap = document.getElementById("gameWrap");
 
       const pedestal = new THREE.Mesh(
         new THREE.CylinderGeometry(.82,1.04,.34,36),
-        new THREE.MeshLambertMaterial({color:0x6b3f11,roughness:.52,metalness:.18,emissive:0x2a1305,emissiveIntensity:.28})
+        new THREE.MeshStandardMaterial({color:0x6b3f11,roughness:.52,metalness:.18,emissive:0x2a1305,emissiveIntensity:.28})
       );
       pedestal.position.y = -.88;
       group.add(pedestal);
@@ -7694,7 +7739,7 @@ const wrap = document.getElementById("gameWrap");
 
       const halo = new THREE.Mesh(
         new THREE.TorusGeometry(1.12,.045,16,92),
-        new THREE.MeshLambertMaterial({color:0xfef3c7,emissive:0xfacc15,emissiveIntensity:1.35,transparent:true,opacity:.95})
+        new THREE.MeshStandardMaterial({color:0xfef3c7,emissive:0xfacc15,emissiveIntensity:1.35,transparent:true,opacity:.95})
       );
       halo.rotation.x = Math.PI/2;
       halo.position.y = -.04;
@@ -7707,7 +7752,7 @@ const wrap = document.getElementById("gameWrap");
       glowBall.position.set(0,.36,0);
       group.add(glowBall);
 
-      const light = makeBraveLitePointLight(0xffd86b,4.2,14,1.25);
+      const light = new THREE.PointLight(0xffd86b,4.2,14,1.25);
       light.position.set(0,.55,.3);
       group.add(light);
 
@@ -7772,7 +7817,7 @@ const wrap = document.getElementById("gameWrap");
     function addBridgeVisuals(){
       const group = new THREE.Group();
 
-      const waterMat = new THREE.MeshLambertMaterial({
+      const waterMat = new THREE.MeshStandardMaterial({
         color:0x0b4f6c, roughness:.32, metalness:.03,
         emissive:0x083047, emissiveIntensity:.42, transparent:true, opacity:.82
       });
@@ -7784,13 +7829,13 @@ const wrap = document.getElementById("gameWrap");
 
       const bridgeBase = new THREE.Mesh(
         new THREE.BoxGeometry(3.2,.34,20.2),
-        new THREE.MeshLambertMaterial({color:0x80522b,roughness:.7,metalness:.05,emissive:0x120804,emissiveIntensity:.12})
+        new THREE.MeshStandardMaterial({color:0x80522b,roughness:.7,metalness:.05,emissive:0x120804,emissiveIntensity:.12})
       );
       bridgeBase.position.set(0,.16,-49.0);
       bridgeBase.receiveShadow = !LOW_POWER;
       group.add(bridgeBase);
 
-      const plankMat = new THREE.MeshLambertMaterial({color:0xb8792c,roughness:.62,metalness:.06,emissive:0x1b0b02,emissiveIntensity:.11});
+      const plankMat = new THREE.MeshStandardMaterial({color:0xb8792c,roughness:.62,metalness:.06,emissive:0x1b0b02,emissiveIntensity:.11});
       for(let i=0;i<18;i++){
         const plank = new THREE.Mesh(new THREE.BoxGeometry(3.05,.06,.72), plankMat);
         plank.position.set(0,.36,-57.5 + i*1.05);
@@ -7798,7 +7843,7 @@ const wrap = document.getElementById("gameWrap");
         group.add(plank);
       }
 
-      const railMat = new THREE.MeshLambertMaterial({color:0x5a3518,roughness:.75,metalness:.04});
+      const railMat = new THREE.MeshStandardMaterial({color:0x5a3518,roughness:.75,metalness:.04});
       for(const x of [-1.75,1.75]){
         const sideBeam = new THREE.Mesh(new THREE.BoxGeometry(.12,.12,19.8), railMat);
         sideBeam.position.set(x,.92,-49.0);
@@ -7820,14 +7865,14 @@ const wrap = document.getElementById("gameWrap");
       // Same object-prompt pattern as Chamber 2 torch buttons.
       const base = new THREE.Mesh(
         new THREE.CylinderGeometry(.42,.48,.22,18),
-        new THREE.MeshLambertMaterial({color:0x5a2a0b,roughness:.75,metalness:.1,emissive:0x170703,emissiveIntensity:.10})
+        new THREE.MeshStandardMaterial({color:0x5a2a0b,roughness:.75,metalness:.1,emissive:0x170703,emissiveIntensity:.10})
       );
       base.castShadow = !LOW_POWER;
       group.add(base);
 
       const button = new THREE.Mesh(
         new THREE.CylinderGeometry(.24,.27,.16,18),
-        new THREE.MeshLambertMaterial({color:0xd9952b,roughness:.5,metalness:.22,emissive:0x3a1b03,emissiveIntensity:.18})
+        new THREE.MeshStandardMaterial({color:0xd9952b,roughness:.5,metalness:.22,emissive:0x3a1b03,emissiveIntensity:.18})
       );
       button.position.y = .19;
       button.castShadow = !LOW_POWER;
@@ -7835,7 +7880,7 @@ const wrap = document.getElementById("gameWrap");
 
       const stepPlank = new THREE.Mesh(
         new THREE.BoxGeometry(1.18,.08,.82),
-        new THREE.MeshLambertMaterial({color:0xb8792c,roughness:.55,metalness:.08,emissive:0x2b1304,emissiveIntensity:.16})
+        new THREE.MeshStandardMaterial({color:0xb8792c,roughness:.55,metalness:.08,emissive:0x2b1304,emissiveIntensity:.16})
       );
       stepPlank.position.y = .08;
       group.add(stepPlank);
@@ -7858,7 +7903,7 @@ const wrap = document.getElementById("gameWrap");
       label.rotation.x = -0.15;
       group.add(label);
 
-      const light = makeBraveLitePointLight(0xffd86b, .55, 5, 1.8);
+      const light = new THREE.PointLight(0xffd86b, .55, 5, 1.8);
       light.position.set(0,.42,0);
       group.add(light);
 
@@ -7922,19 +7967,19 @@ const wrap = document.getElementById("gameWrap");
       const group = new THREE.Group();
       group.position.set(x,.82,z);
 
-      const shellMat = new THREE.MeshLambertMaterial({
+      const shellMat = new THREE.MeshStandardMaterial({
         color:0x15b86a,
         roughness:.38,
         metalness:.12,
         emissive:0x11a85b,
         emissiveIntensity:.75
       });
-      const darkMat = new THREE.MeshLambertMaterial({color:0x062816,roughness:.55,metalness:.05,emissive:0x042012,emissiveIntensity:.22});
+      const darkMat = new THREE.MeshStandardMaterial({color:0x062816,roughness:.55,metalness:.05,emissive:0x042012,emissiveIntensity:.22});
 
       // C2/C4-style visible prompt pad on the floor.
       const pad = new THREE.Mesh(
         new THREE.CylinderGeometry(.9,.98,.12,32),
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshStandardMaterial({
           color:0x2f1a08,
           roughness:.42,
           metalness:.06,
@@ -8000,7 +8045,7 @@ const wrap = document.getElementById("gameWrap");
       numLabel.renderOrder = 20;
       group.add(numLabel);
 
-      const glow = makeBraveLitePointLight(0x22c55e, LOW_POWER ? .9 : 1.25, 5, 1.7);
+      const glow = new THREE.PointLight(0x22c55e, LOW_POWER ? .9 : 1.25, 5, 1.7);
       glow.position.set(0,.35,0);
       group.add(glow);
 
@@ -8200,7 +8245,7 @@ function addHieroglyphPanel(x,z,rotY,text){
       text.split("\n").forEach((line,i)=>ctx.fillText(line,256,88+i*70));
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
-      const mat = new THREE.MeshLambertMaterial({map:tex,roughness:.75,emissive:0x1b0f06,emissiveIntensity:.22});
+      const mat = new THREE.MeshStandardMaterial({map:tex,roughness:.75,emissive:0x1b0f06,emissiveIntensity:.22});
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.8,1.4), mat);
       mesh.position.set(x,1.65,z);
       mesh.rotation.y = rotY;
