@@ -1,1 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#181009">
+<title>Uncle Joe and the Key of Product — Brave Desktop</title>
+<style>
+:root{
+  --bg:#0f0a06;--panel:#21170d;--panel2:#181008;--gold:#ffd86b;--sand:#c89447;
+  --ink:#fff6d6;--muted:#d7c59d;--line:#6b481f;--good:#79f0a0;--bad:#ff8d8d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:var(--bg);color:var(--ink);font-family:Trebuchet MS,Segoe UI,Arial,sans-serif}
+body{overflow:auto;background:linear-gradient(#24170c,#0f0a06)}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{width:min(1280px,calc(100% - 28px));margin:auto;padding:14px 0 28px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 14px;border:2px solid var(--line);border-radius:18px;background:#1a1109;position:sticky;top:8px;z-index:20;box-shadow:0 8px 24px #0008}
+.title{font-size:clamp(20px,2.4vw,33px);font-weight:1000;color:#ffe69b}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:7px 10px;border-radius:999px;border:1px solid #6a481f;background:#0b0805;font-weight:900;font-size:14px}
+.card{margin-top:14px;border:2px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:0 12px 30px #0008;overflow:hidden}
+.cover{display:grid;grid-template-columns:1fr 1.15fr;min-height:590px}
+.coverArt{position:relative;overflow:hidden;background:linear-gradient(#ddb25f 0 57%,#75894a 57% 67%,#3a2615 67%);display:grid;place-items:center}
+.sun{position:absolute;right:9%;top:8%;width:92px;height:92px;border-radius:50%;background:#ffe079;box-shadow:0 0 0 18px #ffe07922}
+.pyramid{width:min(520px,86%);height:310px;background:#c29149;clip-path:polygon(50% 0,100% 100%,0 100%);filter:drop-shadow(0 14px 0 #573719);position:relative}
+.pyramid:after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:72px;height:96px;background:#120b05;border:7px solid #845727;border-bottom:0}
+.joe{position:absolute;left:8%;bottom:28px;font-size:96px;filter:drop-shadow(0 7px 0 #0005)}
+.coverText{padding:42px;display:flex;flex-direction:column;justify-content:center}
+.coverText h1{font-size:clamp(34px,4vw,58px);line-height:1.02;margin:0 0 14px;color:var(--gold)}
+.coverText p{font-size:19px;line-height:1.5;color:var(--muted);max-width:680px}
+.notice{padding:11px 13px;border-radius:14px;background:#0f0a06;border:1px solid #68481f;color:#e7d8b7;font-weight:800}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.btn{border:2px solid #8a602d;border-radius:14px;padding:12px 18px;background:#5d3d18;color:#fff;font-weight:1000;box-shadow:0 4px 0 #241508}
+.btn:hover{filter:brightness(1.08)}
+.btn.primary{background:#9b661e;color:#fff6d9}
+.btn.secondary{background:#2b2117}
+.btn.good{background:#176c3b;border-color:#3fa768}
+.btn.danger{background:#6e2929;border-color:#a84d4d}
+.hidden{display:none!important}
+.how{margin-top:16px;padding:16px;border-radius:16px;background:#151008;border:1px solid #5f421f;color:#d5c39b;line-height:1.55}
+.how b{color:#ffe59a}
+.gameCard{padding:16px}
+.progress{height:14px;border-radius:999px;background:#0b0704;border:1px solid #60401b;overflow:hidden}
+.progress>div{height:100%;width:0;background:linear-gradient(90deg,#ad7424,#ffe27c);transition:width .25s ease}
+.stageGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
+.stageTile{min-height:90px;padding:9px 6px;border-radius:14px;background:#171008;border:1px solid #5b3e1c;text-align:center;display:grid;align-content:center;gap:4px}
+.stageTile.active{outline:3px solid #e8b84b;background:#35230f}
+.stageTile.done{background:#17331f;border-color:#3f8e58}
+.stageTile .icon{font-size:28px}
+.stageTile small{color:#cdb98d;font-weight:800}
+.gameLayout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.55fr);gap:14px;margin-top:14px}
+.scene{min-height:540px;border:2px solid #68471f;border-radius:18px;background:#171008;padding:18px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.sceneHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.sceneHead h2{font-size:clamp(28px,3vw,42px);margin:0;color:#ffe79d}
+.skill{color:#d3c092;font-weight:800;margin-top:4px}
+.visual{flex:1;min-height:260px;display:grid;place-items:center;position:relative}
+.bigIcon{font-size:clamp(110px,15vw,190px);filter:drop-shadow(0 10px 0 #0005)}
+.deco span{position:absolute;font-size:44px;opacity:.9}
+.deco span:nth-child(1){left:6%;top:20%}.deco span:nth-child(2){right:7%;top:22%}.deco span:nth-child(3){left:15%;bottom:10%}.deco span:nth-child(4){right:17%;bottom:12%}
+.questionBox{padding:18px;border-radius:16px;border:2px solid #68471f;background:#0d0905;text-align:center}
+.question{font-size:clamp(36px,5vw,62px);font-weight:1000;color:#fff0ad;margin-bottom:12px}
+.answerRow{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.answer{width:240px;max-width:70vw;padding:10px 12px;border-radius:12px;border:3px solid #806032;background:#fff8e9;color:#2b1a08;font-size:34px;font-weight:1000;text-align:center}
+.feedback{min-height:30px;margin-top:10px;font-size:18px;font-weight:1000}
+.feedback.good{color:var(--good)}.feedback.bad{color:var(--bad)}
+.side{border:2px solid #60421e;border-radius:18px;background:#171008;padding:14px;height:max-content}
+.side h3{margin:0 0 10px;color:#ffe69a}
+.reward{padding:10px;border-radius:12px;background:#0d0905;border:1px solid #53391b;color:#8f8062;font-weight:900;margin:8px 0}
+.reward.on{background:#35240f;border-color:#b77b25;color:#ffefb8}
+.side p{color:#bdab84;line-height:1.45;font-size:14px}
+.finish{text-align:center;padding:44px}
+.finish .key{font-size:104px}
+.finish h2{font-size:46px;color:#ffe079;margin:6px 0}
+.finish p{font-size:19px;color:#d8c7a0}
+footer{text-align:center;color:#9f8d6c;font-size:13px;margin-top:14px}
+@media(max-width:900px){
+  .cover{grid-template-columns:1fr}.coverArt{min-height:300px}.coverText{padding:26px}
+  .gameLayout{grid-template-columns:1fr}.stageGrid{grid-template-columns:repeat(3,1fr)}
+  .topbar{position:static}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="title">🏺 Uncle Joe and the Key of Product</div>
+    <div class="pills">
+      <div class="pill">Desktop Brave Version</div>
+      <div class="pill">2D lightweight graphics</div>
+      <div class="pill">Progress: <span id="topProgress">0 / 30</span></div>
+    </div>
+  </div>
 
+  <section id="cover" class="card cover">
+    <div class="coverArt">
+      <div class="sun"></div>
+      <div class="pyramid"></div>
+      <div class="joe">🧔‍♂️</div>
+    </div>
+    <div class="coverText">
+      <h1>Brave Browser Edition</h1>
+      <p>Help Uncle Joe rescue the villagers, solve the multiplication challenges and unlock the final door with the <b>Key of Product</b>.</p>
+      <div class="notice">This version deliberately removes WebGL, Three.js, 3D models and heavy lighting effects. The adventure and six multiplication stages remain.</div>
+      <div class="actions">
+        <button class="btn primary" id="startBtn">Start / Continue</button>
+        <button class="btn secondary" id="howBtn">How to Play</button>
+        <button class="btn danger" id="resetBtn">Reset Progress</button>
+      </div>
+      <div id="howPanel" class="how hidden">
+        <b>How to play</b><br>
+        Complete each multiplication challenge. Correct answers move you through the six chambers. Finish all challenges to collect the Key of Product and rescue the villagers.<br><br>
+        <b>Stages:</b> 1-digit facts → 2-digit × 1-digit without regrouping → 2-digit × 1-digit with regrouping → 3-digit × 1-digit without regrouping → 3-digit × 1-digit with regrouping → 3-digit × 1-digit giving a 4-digit product.
+      </div>
+    </div>
+  </section>
+
+  <section id="gamePanel" class="card gameCard hidden">
+    <div class="progress"><div id="progressBar"></div></div>
+    <div id="stageGrid" class="stageGrid"></div>
+
+    <div class="gameLayout">
+      <div class="scene">
+        <div class="sceneHead">
+          <div>
+            <h2 id="stageName">Entrance</h2>
+            <div id="skillText" class="skill"></div>
+          </div>
+          <div class="pill">Question <span id="qNum">1</span> / <span id="qTotal">4</span></div>
+        </div>
+
+        <div class="visual">
+          <div id="deco" class="deco"></div>
+          <div id="bigIcon" class="bigIcon">🏺</div>
+        </div>
+
+        <div class="questionBox">
+          <div id="question" class="question">7 × 6 = ?</div>
+          <div class="answerRow">
+            <input id="answer" class="answer" inputmode="numeric" autocomplete="off" aria-label="Answer">
+            <button id="checkBtn" class="btn good">Check</button>
+            <button id="nextBtn" class="btn primary hidden">Next ▶</button>
+          </div>
+          <div id="feedback" class="feedback"></div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <h3>Adventure Rewards</h3>
+        <div id="rewardList"></div>
+        <p>This Brave-specific copy is separate from the original Product Joe desktop game.</p>
+        <p>Graphics are intentionally simple so Brave does not need to render the original 3D pyramid, GLTF characters, lighting, materials or shaders.</p>
+        <div class="actions">
+          <button id="menuBtn" class="btn secondary">Main Menu</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="finishPanel" class="card finish hidden">
+    <div class="key">🗝️</div>
+    <h2>The Escape Is Complete!</h2>
+    <p>You completed all six multiplication chambers and found the <b>Key of Product</b>.</p>
+    <p><b>The villagers are safe.</b></p>
+    <button id="playAgainBtn" class="btn primary">Play Again</button>
+  </section>
+
+  <footer>Designed by Lim Kim Sze © 2026 · Brave Browser Compatibility Edition</footer>
+</div>
+
+<script>
+(()=>{
+"use strict";
+const STAGES=[
+ {name:"Entrance",icon:"🏺",deco:["🪨","🌴","🔶","🐕"],count:4,skill:"1-digit × 1-digit facts",reward:"Ruby of Product ♦️",mode:"fact"},
+ {name:"Torch Corridor",icon:"🔥",deco:["🔥","🧱","🔥","🧱"],count:4,skill:"2-digit × 1-digit = 2-digit, no regrouping",reward:"Topaz of Tens 🔶",mode:"twoNo"},
+ {name:"Scarab Chamber",icon:"🪲",deco:["🪲","✨","🪲","💚"],count:5,skill:"2-digit × 1-digit with regrouping",reward:"Emerald of Hundreds 💚",mode:"twoReg"},
+ {name:"Sand Bridge",icon:"🌉",deco:["🏜️","👣","🏜️","👣"],count:5,skill:"3-digit × 1-digit = 3-digit, no regrouping",reward:"Wondrous Magic Wand ✨",mode:"threeNo"},
+ {name:"Villagers Hall",icon:"🧑‍🌾",deco:["👩‍🌾","👨‍🍳","👩‍🏫","👨‍🔧"],count:6,skill:"3-digit × 1-digit with regrouping",reward:"Six Villagers Freed 🧑‍🤝‍🧑",mode:"threeReg"},
+ {name:"Number Lock Chamber",icon:"🔐",deco:["🔒","☀️","🔒","🗿"],count:6,skill:"3-digit × 1-digit = 4-digit",reward:"Key of Product 🗝️",mode:"fourDigit"}
+];
+const TOTAL=STAGES.reduce((a,s)=>a+s.count,0);
+const KEY="UncleJoeBraveDesktopV1";
+const $=id=>document.getElementById(id);
+let state=load(), current=null, locked=false;
+
+function load(){
+ try{
+  const s=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(s && Number.isInteger(s.stage) && Number.isInteger(s.index)) return s;
+ }catch(e){}
+ return {stage:0,index:0};
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+function qFact(){return [rand(2,9),rand(2,9)]}
+function qTwoNo(){
+ for(let i=0;i<500;i++){const b=rand(2,9),t=rand(1,9),o=rand(0,9);if(o*b<10&&t*b<10)return[t*10+o,b]}
+ return [21,3]
+}
+function qTwoReg(){
+ for(let i=0;i<700;i++){const b=rand(2,9),a=rand(12,99),o=a%10;if(o*b>=10&&a*b<=999)return[a,b]}
+ return [47,6]
+}
+function qThreeNo(){
+ for(let i=0;i<1000;i++){const b=rand(2,9),h=rand(1,4),t=rand(0,9),o=rand(0,9);if(o*b<10&&t*b<10&&h*b<10)return[h*100+t*10+o,b]}
+ return [212,3]
+}
+function qThreeReg(){
+ for(let i=0;i<1200;i++){const b=rand(2,9),a=rand(101,499),o=a%10,t=Math.floor(a/10)%10;if(a*b<1000&&(o*b>=10||t*b>=10))return[a,b]}
+ return [238,4]
+}
+function qFour(){
+ for(let i=0;i<900;i++){const b=rand(2,9),a=rand(200,999),p=a*b;if(p>=1000&&p<=9999)return[a,b]}
+ return [436,7]
+}
+function makeQuestion(mode){
+ const p=mode==="fact"?qFact():mode==="twoNo"?qTwoNo():mode==="twoReg"?qTwoReg():mode==="threeNo"?qThreeNo():mode==="threeReg"?qThreeReg():qFour();
+ return {a:p[0],b:p[1],ans:p[0]*p[1]};
+}
+function completed(){
+ let n=0;
+ for(let i=0;i<Math.min(state.stage,STAGES.length);i++)n+=STAGES[i].count;
+ if(state.stage<STAGES.length)n+=state.index;
+ return Math.min(TOTAL,n);
+}
+function renderHeader(){
+ const n=completed();
+ $("topProgress").textContent=n+" / "+TOTAL;
+ $("progressBar").style.width=(n/TOTAL*100)+"%";
+}
+function renderStages(){
+ $("stageGrid").innerHTML=STAGES.map((s,i)=>{
+  const cls=i<state.stage?"done":i===state.stage?"active":"";
+  return '<div class="stageTile '+cls+'"><div class="icon">'+(i<state.stage?"✅":s.icon)+'</div><strong>'+s.name+'</strong><small>'+s.count+' challenges</small></div>';
+ }).join("");
+}
+function renderRewards(){
+ $("rewardList").innerHTML=STAGES.map((s,i)=>'<div class="reward '+(i<state.stage?"on":"")+'">'+(i<state.stage?"✓ ":"")+s.reward+'</div>').join("");
+}
+function renderQuestion(fresh=true){
+ if(state.stage>=STAGES.length){finish();return}
+ const s=STAGES[state.stage];
+ renderHeader();renderStages();renderRewards();
+ $("stageName").textContent=s.name;
+ $("skillText").textContent=s.skill;
+ $("qNum").textContent=state.index+1;
+ $("qTotal").textContent=s.count;
+ $("bigIcon").textContent=s.icon;
+ $("deco").innerHTML=s.deco.map(x=>"<span>"+x+"</span>").join("");
+ if(fresh||!current)current=makeQuestion(s.mode);
+ $("question").textContent=current.a+" × "+current.b+" = ?";
+ $("answer").value="";
+ $("answer").disabled=false;
+ $("feedback").textContent="";
+ $("feedback").className="feedback";
+ $("nextBtn").classList.add("hidden");
+ $("checkBtn").classList.remove("hidden");
+ locked=false;
+ setTimeout(()=>$("answer").focus(),50);
+}
+function check(){
+ if(locked)return;
+ const raw=$("answer").value.trim(),v=Number(raw);
+ if(!raw||!Number.isFinite(v)){
+  $("feedback").textContent="Enter your answer first.";
+  $("feedback").className="feedback bad";
+  return;
+ }
+ if(v===current.ans){
+  locked=true;
+  $("answer").disabled=true;
+  $("feedback").textContent="Correct! The chamber unlocks.";
+  $("feedback").className="feedback good";
+  $("checkBtn").classList.add("hidden");
+  $("nextBtn").classList.remove("hidden");
+ }else{
+  $("feedback").textContent="Not yet. Check your multiplication and try again.";
+  $("feedback").className="feedback bad";
+  $("answer").select();
+ }
+}
+function advance(){
+ const s=STAGES[state.stage];
+ state.index++;
+ if(state.index>=s.count){state.stage++;state.index=0}
+ save();
+ if(state.stage>=STAGES.length){finish();return}
+ current=null;renderQuestion(true);
+}
+function showGame(){
+ $("cover").classList.add("hidden");
+ $("finishPanel").classList.add("hidden");
+ $("gamePanel").classList.remove("hidden");
+ renderQuestion(true);
+}
+function showMenu(){
+ $("gamePanel").classList.add("hidden");
+ $("finishPanel").classList.add("hidden");
+ $("cover").classList.remove("hidden");
+ renderHeader();
+}
+function finish(){
+ state.stage=STAGES.length;state.index=0;save();
+ $("cover").classList.add("hidden");
+ $("gamePanel").classList.add("hidden");
+ $("finishPanel").classList.remove("hidden");
+ $("topProgress").textContent=TOTAL+" / "+TOTAL;
+}
+function reset(){
+ if(!confirm("Reset Brave-version progress and start again?"))return;
+ state={stage:0,index:0};current=null;save();showMenu();
+}
+$("startBtn").onclick=()=>state.stage>=STAGES.length?finish():showGame();
+$("howBtn").onclick=()=>$("howPanel").classList.toggle("hidden");
+$("resetBtn").onclick=reset;
+$("checkBtn").onclick=check;
+$("nextBtn").onclick=advance;
+$("menuBtn").onclick=showMenu;
+$("playAgainBtn").onclick=()=>{state={stage:0,index:0};current=null;save();showGame()};
+$("answer").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();locked?advance():check()}});
+renderHeader();
+})();
+</script>
+</body>
+</html>
