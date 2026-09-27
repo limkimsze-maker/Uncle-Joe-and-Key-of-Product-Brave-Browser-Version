@@ -3,72 +3,160 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Uncle Joe and the Key of Product — Brave Desktop</title>
+<title>Uncle Joe and the Key of Product — Brave Desktop 3D</title>
 <style>
 html,body{margin:0;width:100%;height:100%;background:#070403;color:#fff0b0;font-family:Arial,sans-serif}
-#loading{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;background:#070403}
+#loading{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;background:#070403;z-index:999999}
 #loading b{font-size:28px;color:#ffd86b}
-#loading small{display:block;margin-top:10px;color:#cdbb91}
+#loading small{display:block;margin-top:10px;color:#cdbb91;line-height:1.45}
 </style>
 </head>
 <body>
-<div id="loading"><div><b>Loading Product Joe 3D — Brave Edition…</b><small>Using lighter 3D graphics while keeping the original multiplication game.</small></div></div>
+<div id="loading"><div><b>Loading Product Joe 3D — Brave Edition…</b><small>Same multiplication game, lighter 3D rendering.</small></div></div>
 <script>
 (async function(){
   "use strict";
-  const GOOD_HTML=[
-    "https://raw.githubusercontent.com/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product-desktop/bae4ec1fb586c3190f61d767187aca389e3c6d51/index.html",
-    "https://cdn.jsdelivr.net/gh/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product-desktop@bae4ec1fb586c3190f61d767187aca389e3c6d51/index.html"
-  ];
-  const VENDOR_BASE="https://cdn.jsdelivr.net/gh/limkimsze-maker/P3-Uncle-Joe-and-the-Key-of-Product-desktop@10851807e6d9802b2e0b74d4f5f9541478ccc8d3/";
+
   let html="";
-  for(const url of GOOD_HTML){
-    try{
-      const r=await fetch(url,{cache:"no-store",mode:"cors"});
-      if(r.ok){
-        const t=await r.text();
-        if(t && t.indexOf("Uncle Joe and the Key of Product")>=0){html=t;break;}
-      }
-    }catch(e){}
-  }
-  if(!html){
-    document.getElementById("loading").innerHTML="<div><b>Unable to load the 3D game.</b><small>Please refresh once.</small></div>";
+  try{
+    const r=await fetch("./game-source.html?brave3d=20260927b",{cache:"no-store"});
+    if(r.ok) html=await r.text();
+  }catch(e){}
+
+  if(!html || html.indexOf("Uncle Joe and the Key of Product")<0){
+    document.getElementById("loading").innerHTML="<div><b>Unable to load Product Joe.</b><small>Please refresh the page once.</small></div>";
     return;
   }
 
-  // Pin working Three.js support files from the known-good desktop lineage.
-  html=html.replaceAll("./vendor/three.min.js",VENDOR_BASE+"vendor/three.min.js");
-  html=html.replaceAll("./vendor/GLTFLoader.js",VENDOR_BASE+"vendor/GLTFLoader.js");
-  html=html.replaceAll("./vendor/SkeletonUtils.js",VENDOR_BASE+"vendor/SkeletonUtils.js");
+  // Keep this Brave copy independent from the original game's saved progress.
+  html=html.replace(
+    'const SAVE_KEY = "p3_multiply_egyptian_maze_progress_v1";',
+    'const SAVE_KEY = "p3_multiply_egyptian_maze_progress_brave_desktop_v1";'
+  );
+  html=html.replace(
+    'const TEACHER_TOOL_SESSION_KEY = "uncleJoeTeacherToolsUnlocked";',
+    'const TEACHER_TOOL_SESSION_KEY = "uncleJoeTeacherToolsUnlockedBraveDesktop";'
+  );
 
-  // Brave desktop compatibility profile:
-  // 1) reuse the game's built-in low-power 3D path,
-  // 2) keep all chambers, geometry, movement, collisions and multiplication logic,
-  // 3) use the game's built-in fallback 3D dog / lightweight villager art instead of GLTF models,
-  // 4) render at 1x device pixel ratio and avoid forcing the high-performance GPU path.
+  const originalClear=`function clearSavedProgress(){
+      try{
+        const kill = [];
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(!k) continue;
+          if(
+            k === SAVE_KEY ||
+            k.includes("p3_multiply_egyptian_maze") ||
+            k.includes("P3-Multiply-Egyptian-Maze") ||
+            k.includes("Uncle") ||
+            k.includes("uncle") ||
+            k.includes("Product") ||
+            k.includes("egypt")
+          ) kill.push(k);
+        }
+        kill.forEach(k=>localStorage.removeItem(k));
+        localStorage.removeItem(SAVE_KEY);
+      }catch(e){}
+      try{ sessionStorage.clear(); }catch(e){}
+    }
+
+    `;
+  const braveClear=`function clearSavedProgress(){
+      try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+      try{ sessionStorage.removeItem(TEACHER_TOOL_SESSION_KEY); }catch(e){}
+    }
+
+    `;
+  html=html.replace(originalClear,braveClear);
+
+  // Force the original game's own low-power 3D path on Brave desktop.
   html=html.replace(
     'const LOW_POWER = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || Math.min(window.innerWidth, window.innerHeight) < 700;',
     'const LOW_POWER = true;'
   );
+
+  // Lighter renderer settings: still WebGL/Three.js, just less GPU pressure.
   html=html.replace(
     'new THREE.WebGLRenderer({ antialias: false, powerPreference:"high-performance" })',
-    'new THREE.WebGLRenderer({ antialias:false, powerPreference:"default", precision:"mediump" })'
+    'new THREE.WebGLRenderer({ antialias:false, powerPreference:"default", precision:"mediump", stencil:false })'
   );
   html=html.replace(
     'renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.1));',
     'renderer.setPixelRatio(1);'
   );
 
-  const hook='<script>window.__UJ_BRAVE_DESKTOP_EDITION=true;if(window.THREE){THREE.GLTFLoader=undefined;THREE.SkeletonUtils=undefined;}<\/script>';
+  // Imported GLTF characters are the heaviest part and are not needed for gameplay.
+  // The original code already has a procedural 3D dog and villager fallbacks.
   html=html.replace(
-    '<script crossorigin="anonymous" src="'+VENDOR_BASE+'vendor/SkeletonUtils.js"><\/script>',
-    '<script crossorigin="anonymous" src="'+VENDOR_BASE+'vendor/SkeletonUtils.js"><\/script>'+hook
+    '<script crossorigin="anonymous" src="./vendor/GLTFLoader.js"><\/script>',
+    ''
+  );
+  html=html.replace(
+    '<script crossorigin="anonymous" src="./vendor/SkeletonUtils.js"><\/script>',
+    ''
   );
 
-  // Label this separate copy clearly without changing game mechanics.
+  // Insert a Brave-safe Three.js material profile immediately after Three.js loads.
+  // Standard/PBR materials become simpler Lambert materials, while geometry,
+  // collisions, chamber logic, movement and the multiplication algorithm stay intact.
+  const compat=`
+<script>
+(function(){
+  "use strict";
+  if(!window.THREE) return;
+  window.__UJ_BRAVE_3D_EDITION = true;
+
+  var T=window.THREE;
+  var Lambert=T.MeshLambertMaterial;
+
+  function copySupported(p){
+    p=p||{};
+    var q={};
+    var keys=[
+      "color","map","lightMap","lightMapIntensity","aoMap","aoMapIntensity",
+      "emissive","emissiveMap","emissiveIntensity",
+      "bumpMap","bumpScale","normalMap","normalScale",
+      "displacementMap","displacementScale","displacementBias",
+      "alphaMap","envMap","combine","reflectivity","refractionRatio",
+      "wireframe","wireframeLinewidth","flatShading","vertexColors","fog",
+      "transparent","opacity","alphaTest","depthTest","depthWrite","blending"
+    ];
+    for(var i=0;i<keys.length;i++){
+      var k=keys[i];
+      if(p[k]!==undefined) q[k]=p[k];
+    }
+    // Double-sided lightweight materials prevent thin pyramid/wall faces
+    // disappearing on Brave's WebGL path.
+    q.side=T.DoubleSide;
+    return q;
+  }
+
+  function BraveStandardMaterial(params){
+    var source=params||{};
+    var mat=new Lambert(copySupported(source));
+    // Keep compatibility fields for any later game-side updates.
+    mat.roughness=source.roughness!==undefined?source.roughness:1;
+    mat.metalness=source.metalness!==undefined?source.metalness:0;
+    return mat;
+  }
+  BraveStandardMaterial.prototype=Lambert.prototype;
+  try{Object.setPrototypeOf(BraveStandardMaterial,Lambert);}catch(e){}
+  T.MeshStandardMaterial=BraveStandardMaterial;
+
+  // No imported GLTF models in the Brave edition. Original fallbacks stay active.
+  T.GLTFLoader=undefined;
+  T.SkeletonUtils=undefined;
+})();
+<\/script>`;
+
+  html=html.replace(
+    '<script crossorigin="anonymous" src="./vendor/three.min.js"><\/script>',
+    '<script crossorigin="anonymous" src="./vendor/three.min.js"><\/script>'+compat
+  );
+
   html=html.replace(
     '<title>Uncle Joe and the Key of Product</title>',
-    '<title>Uncle Joe and the Key of Product — Brave Desktop</title>'
+    '<title>Uncle Joe and the Key of Product — Brave Desktop 3D</title>'
   );
 
   document.open();
